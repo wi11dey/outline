@@ -22,23 +22,41 @@
 		  (count (or type char) (+ current 1) (cdr remaining)))))))
 
     (define (read port)
-      (let (
-	    (buffer (get-output-string)))
+      (define (write-enclosed characters)
+	(write-char #\()
+	(for-each write-char remaining)
+	(write-char #\)))
+      (parameterize ((current-output-port (open-output-string)))
 	(let next-line (
 			(line-number 1)
-			(line (read-line port))
-			(indent-unit #f)
+			(indent-unit 0)
 			(previous-indent 0))
-	  (if (not (eof-object? line))
-	      (let*-values (
-			    (column remaining (split-indent line))
-			    (effective-indent-unit (or indent-unit column))
-			    (indent (call-with-values (lambda () (floor/ column effective-indent-unit))
-				      (lambda (result remainder)
-					(if (> remainder 0)
-					    (error (string-append "inconsistent indentation on line"
-								  (number->string line-number))))
-					result))))
-		
-		)))
-	(primitive-read (open-input-string buffer))))))
+	  (let ((line (read-line port)))
+	    (if (not (eof-object? line))
+		(let*-values (
+			      (column remaining (split-indent line))
+			      (indent-unit' (if (> indent-unit 0)
+						indent-unit
+						column))
+			      (indent indent-remainder (floor/ column indent-unit')))
+		  (if (> indent-remainder 0)
+		      (error (string-append "inconsistent indentation on line "
+					    (number->string line-number)
+					    ": based on previous input, indentation should be in multiples of "
+					    (number->string indent-unit))))
+		  (let ((difference (- indent previous-indent)))
+		    (write-string (make-string difference (if (> difference 0) #\( #\))))
+		    (if (> difference 0)
+			))
+		  (if (> column 0)
+		      (let*-values ((indent indent-remainder (floor/ column indent-unit')))
+			
+			(write-string (make-string (- indent previous-indent) #\())
+			(for-each write-char remaining)))
+		  (begin
+		    (write-enclosed remaining)
+		    (next-line
+		     (+ line-number 1)
+		     indent-unit
+		     column))))))
+	(primitive-read (open-input-string (current-output-port)))))))
