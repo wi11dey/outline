@@ -2,7 +2,6 @@
 (require (for-syntax typed/racket/base
                      syntax/parse
                      enforest/operator)
-         racket/list
          racket/port
          typed/racket/unsafe
          enforest)
@@ -18,6 +17,13 @@
                             [outline-read read]))
 
 (define-syntax outline-=
+  (infix-operator (list)
+                  'macro
+                  (lambda (type in-space)
+                    (values type in-space))
+                  'left))
+
+(define-syntax outline-of
   (infix-operator (list)
                   'macro
                   (lambda (type in-space)
@@ -45,8 +51,8 @@
      #'(#%module-begin (o 'n1 'n2))]))
 
 (define translation-dictionary : (Immutable-HashTable Char Char)
-  (hash #\\ #\~
-        #\| #\¦))
+  #hasheqv([#\\ . #\~]
+           [#\| . #\¦]))
 
 (define (translate-bytes! [bytes : Bytes]) : Void
   (for ([i (in-naturals)]
