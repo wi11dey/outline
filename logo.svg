@@ -14,7 +14,7 @@
    xmlns:svg="http://www.w3.org/2000/svg">
   <style>
     @media (prefers-color-scheme: dark) {
-      path, text {
+      path {
         fill: white;
         stroke: white;
       }
